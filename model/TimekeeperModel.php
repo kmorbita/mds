@@ -368,7 +368,7 @@ class TimekeeperModel
 	}
 	public function getEmployees()
 	{
-		$res = $this->db->query("SELECT emp.created_at,emp.job_stat,emp.employment_status,emp.request_no,emp.emp_id,emp.fname,emp.is_assigned,emp.mname,emp.lname,mp.mp_name as manpower,emp.status,emp.is_present FROM tblemployee emp,tblmanpower mp where emp.mp_id=mp.id");
+		$res = $this->db->query("SELECT mp.mp_code,emp.created_at,emp.job_stat,emp.employment_status,emp.request_no,emp.emp_id,emp.fname,emp.is_assigned,emp.mname,emp.lname,mp.mp_name as manpower,emp.status,emp.is_present FROM tblemployee emp,tblmanpower mp where emp.mp_id=mp.id");
 		while ($row = $res->fetch(PDO::FETCH_ASSOC)) 
 		{
 			$this->data_emp[] = $row;

@@ -64,6 +64,7 @@ if ($res['is_close'] == "1") {
 									<th>No#</th>
 									<th>Employee ID</th>
 									<th>Employee Name</th>
+									<th>Employee Designation</th>
 									<th>Action</th>
 								</tr>
 							</thead>
@@ -74,6 +75,7 @@ if ($res['is_close'] == "1") {
 										<td><?= $i ?></td>
 										<td><?= $row['emp_id'] ?></td>
 										<td><?= $row['fname']." ".$row['mname']." ".$row['lname'] ?></td>
+										<td><?= $row['mp_code'] ?></td>
 										<td class="center"><button type="button" class="btn btn-default btn-sm fa fa-check" onclick="is_available('<?= $row['emp_id'] ?>')"></button></td>
 									</tr>
 									<?php $i++; 

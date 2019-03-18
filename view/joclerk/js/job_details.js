@@ -15,18 +15,18 @@
     });
   }
   function remove(id) {
-  var id = "DICT-"+id;
-  var user = $("#username").val();
-  var form_data = {
-    remove_id : id,
-    user : user
-  }
-  $.ajax({
-    url : "passer.php",
-    type : "POST",
-    data : form_data,
-    cache : false,
-    success : function (res) {
+    var id = "DICT-"+id;
+    var user = $("#username").val();
+    var form_data = {
+      remove_id : id,
+      user : user
+    }
+    $.ajax({
+      url : "passer.php",
+      type : "POST",
+      data : form_data,
+      cache : false,
+      success : function (res) {
       // alert(res);
       if (res == "removed") {
         var notice = new PNotify({
@@ -38,7 +38,7 @@
       }
     }
   });
-}
+  }
   function cancel_req(id) {
     var user = $("#username").val();
     var id = "DICT-"+id;
@@ -54,13 +54,13 @@
       cache : false,
       success : function (res) {
         if (res == "cancelled") {
-        var notice = new PNotify({
-          title: 'Success',
-          text: 'Cancelled!.',
-          type: 'success',
-          shadow: true
-        });
-      }
+          var notice = new PNotify({
+            title: 'Success',
+            text: 'Cancelled!.',
+            type: 'success',
+            shadow: true
+          });
+        }
       }
     });
   }
@@ -186,27 +186,100 @@
   });
     }
     setInterval(list,500);
-  });
-
-
-
-function operator_act(id) {
-    var req = $("#job_req").val();
-    var operator_act = "true";
+    $("#submit_status").click(function(){
+    var submit_status = "true";
+    var id = $("#request_no").val();
+    var user = $("#username").val();
+    var status = $("#status_code").val();
     var form_data = {
-        req : req,
-        operator_act : operator_act,
-        emp_id : id
+      submit_status : submit_status,
+      timestamp : timestamp,
+      reason : reason,
+      user : user,
+      status : status,
+      req : id,
     }
-    $.ajax({
+    if (status != null && status !="") {
+      $.ajax({
         url : "passer.php",
         type : "POST",
         data : form_data,
         cache : false,
         success : function (res) {
+          // alert(res);
+          if (res == "updated") {
+            var notice = new PNotify({
+              title: 'Success',
+              text: 'Job status updated!',
+              type: 'success',
+              shadow: true
+            });
+          }
+          if (res == "error") {
+            var notice = new PNotify({
+              title: 'Error',
+              text: 'Error occured, try again!',
+              type: 'error',
+              shadow: true
+            });
+          }
+          if (res == "no_foreman") {
+            var notice = new PNotify({
+              title: 'Error',
+              text: 'No foreman assigned!',
+              type: 'error',
+              shadow: true
+            });
+          }
+          if (res == "no_personnel") {
+            var notice = new PNotify({
+              title: 'Error',
+              text: 'No personnel dispatched!, notify timekeeper',
+              type: 'error',
+              shadow: true
+            });
+          }
+          if (res == "no_records") {
+            var notice = new PNotify({
+              title: 'Error',
+              text: 'No personnel dispatched!, notify timekeeper',
+              type: 'error',
+              shadow: true
+            });
+          }
+
+        }
+      });
+    }else {
+      new PNotify({
+        title: 'Error',
+        text: 'No status selected!',
+        type: 'error',
+        shadow: true
+      });
+    }
+  });
+  });
+
+
+
+function operator_act(id) {
+  var req = $("#job_req").val();
+  var operator_act = "true";
+  var form_data = {
+    req : req,
+    operator_act : operator_act,
+    emp_id : id
+  }
+  $.ajax({
+    url : "passer.php",
+    type : "POST",
+    data : form_data,
+    cache : false,
+    success : function (res) {
             // alert(res);
-             var i = 1;
-      var arr = JSON.parse(res);
+            var i = 1;
+            var arr = JSON.parse(res);
       // console.log(arr)
       $("#optr_id").val(arr.emp_id);
       $("#optr_task").val(arr.task);
@@ -226,27 +299,27 @@ function operator_act(id) {
       });
       $("#optr_modal").html(html);
       $("#operator_modal").modal("show");
-        }
-    });
+    }
+  });
 }
 
 function personnel_act(id) {
-    var req = $("#job_req").val();
-    var personnel_act = "true";
-    var form_data = {
-        req : req,
-        personnel_act : personnel_act,
-        emp_id : id
-    }
-    $.ajax({
-        url : "passer.php",
-        type : "POST",
-        data : form_data,
-        cache : false,
-        success : function (res) {
+  var req = $("#job_req").val();
+  var personnel_act = "true";
+  var form_data = {
+    req : req,
+    personnel_act : personnel_act,
+    emp_id : id
+  }
+  $.ajax({
+    url : "passer.php",
+    type : "POST",
+    data : form_data,
+    cache : false,
+    success : function (res) {
             // alert(res);
-             var i = 1;
-      var arr = JSON.parse(res);
+            var i = 1;
+            var arr = JSON.parse(res);
       // console.log(arr)
       $("#per_id").val(arr.emp_id);
       $("#per_task").val(arr.task);
@@ -267,18 +340,18 @@ function personnel_act(id) {
       });
       $("#per_modal").html(html);
       $("#personnel_modal").modal("show");
-        }
-    });
+    }
+  });
 }
 
 
 function equipment_act(id) {
-    var req = $("#job_req").val();
-    var form_data = {
-        req : req,
-        equipment_act : id
-    }
-     $.ajax({
+  var req = $("#job_req").val();
+  var form_data = {
+    req : req,
+    equipment_act : id
+  }
+  $.ajax({
     url : "passer.php",
     type : "POST",
     data : form_data,
@@ -286,23 +359,23 @@ function equipment_act(id) {
     success : function (res) {
         // alert(res);
         var i = 1;
-      var arr = JSON.parse(res);
-      var html = "";
-      $("#equipment").val(arr.eqpt_name);
-      var i=1;
-      arr.eqpt_act.forEach(function(item){
-        html+="<tr class='gradeX'>";
-        html+="<td>"+item.status+"</td>";
-        html+="<td>"+item.work_started+"</td>";
-        html+="<td>"+item.work_stopped+"</td>";
-        html+="<td>"+item.work_resumed+"</td>";
-        html+="<td>"+item.work_completed+"</td>";
-        html+="<td>"+item.reason+"</td>";
-        html+="</tr>";
-        i++;
-      });
-      $("#equipment_modal_data").html(html);
-      $("#equipment_modal").modal("show");
-    }
-  });
+        var arr = JSON.parse(res);
+        var html = "";
+        $("#equipment").val(arr.eqpt_name);
+        var i=1;
+        arr.eqpt_act.forEach(function(item){
+          html+="<tr class='gradeX'>";
+          html+="<td>"+item.status+"</td>";
+          html+="<td>"+item.work_started+"</td>";
+          html+="<td>"+item.work_stopped+"</td>";
+          html+="<td>"+item.work_resumed+"</td>";
+          html+="<td>"+item.work_completed+"</td>";
+          html+="<td>"+item.reason+"</td>";
+          html+="</tr>";
+          i++;
+        });
+        $("#equipment_modal_data").html(html);
+        $("#equipment_modal").modal("show");
+      }
+    });
 }

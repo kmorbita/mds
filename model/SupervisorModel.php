@@ -540,25 +540,321 @@ class SupervisorModel
 	{
 		// $check_foreman = $this->db->query("SELECT * FROM tbljoborderrequest where foreman_id!='0' and request_no='".$_POST['req']."'");
 		// if ($check_foreman->rowCount() > 0) {
-			$timezone  = +8;
-			$Ctime = gmdate("Y/m/j H:i:s", time() + 3600*($timezone+date("I")));
-			if($_POST['status'] == "activated"){
-				$remarks = "activated by ".$_POST['user']."(supervisor)";
+		$timezone  = +8;
+		$Ctime = gmdate("Y/m/j H:i:s", time() + 3600*($timezone+date("I")));
+		if($_POST['status'] == "activated"){
+			$remarks = "activated by ".$_POST['user']."(supervisor)";
 				// $check_foreman = $this->db->query("SELECT * FROM tbljoborderrequest where foreman_id='0' and request_no='".$_POST['req']."'");
 				// if ($check_foreman->rowCount() > 0) {
 				// 	return "no_foreman";
 				// }else{
-					$res = $this->db->query("UPDATE tbljoborderrequest set status='activated',remarks='".$remarks."',updated_by='".$_POST['user']."',updated_at='".$Ctime."' where request_no='".$_POST['req']."'");
-					$check = $this->db->query("SELECT * FROM tbljoborderrequest where status='activated' and request_no='".$_POST['req']."'");
-					if ($check->rowCount() > 0) {
-						return "updated";
-					}else {
-						return "error";
-					}
+			$res = $this->db->query("UPDATE tbljoborderrequest set status='activated',remarks='".$remarks."',updated_by='".$_POST['user']."',updated_at='".$Ctime."' where request_no='".$_POST['req']."'");
+			$check = $this->db->query("SELECT * FROM tbljoborderrequest where status='activated' and request_no='".$_POST['req']."'");
+			if ($check->rowCount() > 0) {
+				return "updated";
+			}else {
+				return "error";
+			}
 				// }
-			}else{
-				$res = $this->db->query("UPDATE tbljoborderrequest set status='queued',updated_by='".$_POST['user']."',updated_at='".$Ctime."' where request_no='".$_POST['req']."'");
-				$check = $this->db->query("SELECT * FROM tbljoborderrequest where status='queued' and request_no='".$_POST['req']."'");
+		}else if($_POST['status'] == "cancelled"){
+			$remarks = "cancelled by ".$_POST['user']."(supervisor)";
+			$job_stat = $this->db->query("SELECT * FROM tbljoborderrequest where request_no='".$_POST['req']."'");
+			$row = $job_stat->fetch(PDO::FETCH_ASSOC);
+			$statusofjob=$row['status'];
+			if ($statusofjob == "activated") {
+				$res = $this->db->query("UPDATE tbljoborderrequest set status='cancelled',remarks='".$remarks."',updated_by='".$_POST['user']."',updated_at='".$Ctime."' where request_no='".$_POST['req']."'");
+				$optr = $this->db->query("SELECT * FROM tblgivenequipment_req where request_no='".$_POST['req']."'");
+				while ($row = $optr->fetch(PDO::FETCH_ASSOC)) 
+				{
+					$emp_id = $row['optr_id'];
+					$update2 = $this->db->query("UPDATE tblemployee set job_stat='', request_no='', is_assigned='0',updated_by='".$_POST['user']."',updated_at='".$Ctime."' where emp_id='".$emp_id."'");
+				}
+				$per = $this->db->query("SELECT * FROM tblgivenmanpower_req where request_no='".$_POST['req']."'");
+				while ($row = $per->fetch(PDO::FETCH_ASSOC)) 
+				{
+					$emp_id = $row['emp_id'];
+					$update2 = $this->db->query("UPDATE tblemployee set job_stat='', request_no='', is_assigned='0',updated_by='".$_POST['user']."',updated_at='".$Ctime."' where emp_id='".$emp_id."'");
+				}
+				$equip = $this->db->query("SELECT * FROM tblequipreq where request_no='".$_POST['req']."'");
+				while ($row = $equip->fetch(PDO::FETCH_ASSOC)) 
+				{
+					$eqpt_code = $row['eq_code'];
+					$update2 = $this->db->query("UPDATE tblequipment set status='Active', reason='',updated_by='".$_POST['user']."',updated_at='".$Ctime."' where eqpt_code='".$eqpt_code."'");
+					$update3 = $this->db->query("UPDATE tblequipreq set reason='Cancelled',updated_by='".$_POST['user']."',updated_at='".$Ctime."' where eq_code='".$eqpt_code."'");
+				}
+				$check = $this->db->query("SELECT * FROM tbljoborderrequest where status='cancelled' and request_no='".$_POST['req']."'");
+				if ($check->rowCount() > 0) {
+					return "updated";
+				}else {
+					return "error";
+				}
+			}else if($statusofjob == "queued") {
+				$res = $this->db->query("UPDATE tbljoborderrequest set status='cancelled',remarks='".$remarks."',updated_by='".$_POST['user']."',updated_at='".$Ctime."' where request_no='".$_POST['req']."'");
+				$check = $this->db->query("SELECT * FROM tbljoborderrequest where status='cancelled' and request_no='".$_POST['req']."'");
+				if ($check->rowCount() > 0) {
+					return "updated";
+				}else {
+					return "error";
+				}
+			}else if($statusofjob == "stopped"){
+				$res = $this->db->query("UPDATE tbljoborderrequest set status='cancelled',remarks='".$remarks."',updated_by='".$_POST['user']."',updated_at='".$Ctime."' where request_no='".$_POST['req']."'");
+				$timestamp = $this->db->query("SELECT MAX(id) as id FROM tbljob_timestamp where request_no='".$_POST['req']."'");
+				$get_timestamp = $timestamp->fetch(PDO::FETCH_ASSOC);
+				$togetid = $get_timestamp['id'];
+				$time = $this->db->query("SELECT * FROM tbljob_timestamp where request_no='".$_POST['req']."' and id='".$togetid."'");
+				$get_time = $time->fetch(PDO::FETCH_ASSOC);
+				$ids = $get_time['id'];
+				$stopped = $get_time['work_stopped'];
+				$get = $this->db->query("SELECT * FROM tbljob_timestamp where request_no='".$_POST['req']."' and id < '".$ids."' ORDER BY id DESC LIMIT 1");
+				$getid = $get->fetch(PDO::FETCH_ASSOC);
+				$id = $getid['id'];
+				$time2 = $this->db->query("SELECT * FROM tbljob_timestamp where request_no='".$_POST['req']."' and id='$id'");
+				$get_time2 = $time2->fetch(PDO::FETCH_ASSOC);
+				$jobstat = $get_time2['status'];
+				if ($jobstat == "resumed") {
+					$datetime = $get_time2['work_resumed'];
+					$start_date = new DateTime($stopped);
+					$since_start = $start_date->diff(new DateTime($datetime));
+					$total_time = $since_start->h.":".$since_start->i.":".$since_start->s;
+					$sum = strtotime('00:00:00');
+					$sum2=0; 
+					$time3 = $this->db->query("SELECT * FROM tbljob_timestamp where request_no='".$_POST['req']."' and total_time!=''");
+					while($all_time = $time3->fetch(PDO::FETCH_ASSOC)){
+						$sum1=strtotime($all_time['total_time'])-$sum;
+						$sum2 = $sum2+$sum1;
+					}
+					$sum3=$sum+$sum2;
+					$temp = $sum1=strtotime($total_time)-$sum;
+					$sum3=$sum3+$temp;
+					$com_time = date("H:i:s",$sum3);
+					$updating = $this->db->query("UPDATE tbljob_timestamp set total_time='".$com_time."' where request_no='".$_POST['req']."' and id='".$ids."'");
+				}else if ($jobstat == "working") {
+					$datetime = $get_time2['work_started'];
+					$start_date = new DateTime($stopped);
+					$since_start = $start_date->diff(new DateTime($datetime));
+					$total_time = $since_start->h.":".$since_start->i.":".$since_start->s;
+			// $updating2 = $this->db->query("UPDATE tbljob_timestamp set total_time='".$total_time."' where request_no='".$_POST['req']."' and id='".$ids."'");
+					$sum = strtotime('00:00:00');
+					$sum2=0; 
+					$time3 = $this->db->query("SELECT * FROM tbljob_timestamp where request_no='".$_POST['req']."' and total_time!=''");
+					while($all_time = $time3->fetch(PDO::FETCH_ASSOC)){
+						$sum1=strtotime($all_time['total_time'])-$sum;
+						$sum2 = $sum2+$sum1;
+					}
+					$sum3=$sum+$sum2;
+					$temp = $sum1=strtotime($total_time)-$sum;
+					$sum3=$sum3+$temp;
+					$com_time = date("H:i:s",$sum3);
+					$updating = $this->db->query("UPDATE tbljob_timestamp set total_time='".$com_time."' where request_no='".$_POST['req']."' and id='".$ids."'");
+				}
+				$res2 = $this->db->query("SELECT * FROM tblpersonnel_activity where (status!='completed' or status!='queued') and request_no='".$_POST['req']."'");
+				while ($row = $res2->fetch(PDO::FETCH_ASSOC)) 
+				{
+					$req = $row['request_no'];
+					$emp_id = $row['emp_id'];
+					$rem = $row['remarks'];
+					if ($rem == "Relieved" || $rem == "Rejected") {
+
+					}else{
+						$update = $this->db->query("UPDATE tblpersonnel_activity set status='stopped',remarks='cancelled' ,notes='".$remarks."',updated_by='".$_POST['user']."',updated_at='".$Ctime."' where request_no='".$req."' and emp_id='".$emp_id."'");
+						$ins_per_act = $this->db->query("INSERT INTO tbljobperactivity_timestamp(request_no,emp_id,status,work_stopped,encoded_by,created_at,reason)values('".$req."','".$emp_id."','stopped','".$_POST['timestamp']."','".$_POST['user']."','".$Ctime."','".$_POST['reason']."')");
+						$timestamp = $this->db->query("SELECT MAX(id) as id FROM tbljobperactivity_timestamp where request_no='".$_POST['req']."' and emp_id='".$emp_id."'");
+						$get_timestamp = $timestamp->fetch(PDO::FETCH_ASSOC);
+						$togetid = $get_timestamp['id'];
+						$time = $this->db->query("SELECT * FROM tbljobperactivity_timestamp where request_no='".$_POST['req']."' and id='".$togetid."'");
+						$get_time = $time->fetch(PDO::FETCH_ASSOC);
+						$ids = $get_time['id'];
+						$stopped = $get_time['work_stopped'];
+						$get = $this->db->query("SELECT * FROM tbljobperactivity_timestamp where request_no='".$_POST['req']."' and emp_id='".$emp_id."' and id < '".$ids."' ORDER BY id DESC LIMIT 1");
+						$getid = $get->fetch(PDO::FETCH_ASSOC);
+						$id = $getid['id'];
+						$time2 = $this->db->query("SELECT * FROM tbljobperactivity_timestamp where request_no='".$_POST['req']."' and id='$id'");
+						$get_time2 = $time2->fetch(PDO::FETCH_ASSOC);
+						$jobstat = $get_time2['status'];
+						if ($jobstat == "resumed") {
+							$datetime = $get_time2['work_resumed'];
+							$start_date = new DateTime($stopped);
+							$since_start = $start_date->diff(new DateTime($datetime));
+							$total_time = $since_start->h.":".$since_start->i.":".$since_start->s;
+					// $updating2 = $this->db->query("UPDATE tbljobperactivity_timestamp set total_time='".$total_time."' where request_no='".$_POST['req']."' and id='".$ids."'");
+							$sum = strtotime('00:00:00');
+							$sum2=0; 
+							$time3 = $this->db->query("SELECT * FROM tbljobperactivity_timestamp where request_no='".$_POST['req']."' and total_time!='' and emp_id='".$emp_id."'");
+							while($all_time = $time3->fetch(PDO::FETCH_ASSOC)){
+								$sum1=strtotime($all_time['total_time'])-$sum;
+								$sum2 = $sum2+$sum1;
+							}
+							$sum3=$sum+$sum2;
+							$temp = $sum1=strtotime($total_time)-$sum;
+							$sum3=$sum3+$temp;
+							$com_time = date("H:i:s",$sum3);
+							$updating = $this->db->query("UPDATE tbljobperactivity_timestamp set total_time='".$com_time."' where request_no='".$_POST['req']."' and id='".$ids."'");
+						}else if ($jobstat == "working") {
+							$datetime = $get_time2['work_started'];
+							$start_date = new DateTime($stopped);
+							$since_start = $start_date->diff(new DateTime($datetime));
+							$total_time = $since_start->h.":".$since_start->i.":".$since_start->s;
+					// $updating2 = $this->db->query("UPDATE tbljobperactivity_timestamp set total_time='".$total_time."' where request_no='".$_POST['req']."' and id='".$ids."'");
+							$sum = strtotime('00:00:00');
+							$sum2=0; 
+							$time3 = $this->db->query("SELECT * FROM tbljobperactivity_timestamp where request_no='".$_POST['req']."' and total_time!='' and and emp_id='".$emp_id."'");
+							while($all_time = $time3->fetch(PDO::FETCH_ASSOC)){
+								$sum1=strtotime($all_time['total_time'])-$sum;
+								$sum2 = $sum2+$sum1;
+							}
+							$sum3=$sum+$sum2;
+							$temp = $sum1=strtotime($total_time)-$sum;
+							$sum3=$sum3+$temp;
+							$com_time = date("H:i:s",$sum3);
+							$updating = $this->db->query("UPDATE tbljobperactivity_timestamp set total_time='".$com_time."' where request_no='".$_POST['req']."' and id='".$ids."'");
+						}
+					}
+				}
+				$res3 = $this->db->query("SELECT * FROM tbloperator_activity where (status!='completed' or status!='queued') and request_no='".$_POST['req']."'");
+				while ($row = $res3->fetch(PDO::FETCH_ASSOC)) 
+				{
+					$req2 = $row['request_no'];
+					$emp_id2 = $row['emp_id'];
+					$rem = $row['remarks'];
+					if ($rem == "Relieved" || $rem == "Rejected") {
+
+					}else{
+						$update2 = $this->db->query("UPDATE tbloperator_activity set status='stopped', remarks='cancelled', notes='".$remarks."',updated_by='".$_POST['user']."',updated_at='".$Ctime."' where request_no='".$req2."' and emp_id='".$emp_id2."'");
+						$ins_optr_act = $this->db->query("INSERT INTO tbljoboptractivity_timestamp(request_no,emp_id,status,work_stopped,encoded_by,created_at,reason)values('".$req2."','".$emp_id2."','stopped','".$_POST['timestamp']."','".$_POST['user']."','".$Ctime."','".$_POST['reason']."')");
+						$timestamp = $this->db->query("SELECT MAX(id) as id FROM tbljoboptractivity_timestamp where request_no='".$_POST['req']."' and emp_id='".$emp_id2."'");
+						$get_timestamp = $timestamp->fetch(PDO::FETCH_ASSOC);
+						$togetid = $get_timestamp['id'];
+						$time = $this->db->query("SELECT * FROM tbljoboptractivity_timestamp where request_no='".$_POST['req']."' and id='".$togetid."'");
+						$get_time = $time->fetch(PDO::FETCH_ASSOC);
+						$ids = $get_time['id'];
+						$stopped = $get_time['work_stopped'];
+						$get = $this->db->query("SELECT * FROM tbljoboptractivity_timestamp where request_no='".$_POST['req']."' and emp_id='".$emp_id2."' and id < '".$ids."' ORDER BY id DESC LIMIT 1");
+						$getid = $get->fetch(PDO::FETCH_ASSOC);
+						$id = $getid['id'];
+						$time2 = $this->db->query("SELECT * FROM tbljoboptractivity_timestamp where request_no='".$_POST['req']."' and id='$id'");
+						$get_time2 = $time2->fetch(PDO::FETCH_ASSOC);
+						$jobstat = $get_time2['status'];
+						if ($jobstat == "resumed") {
+							$datetime = $get_time2['work_resumed'];
+							$start_date = new DateTime($stopped);
+							$since_start = $start_date->diff(new DateTime($datetime));
+							$total_time = $since_start->h.":".$since_start->i.":".$since_start->s;
+					// $updating2 = $this->db->query("UPDATE tbljoboptractivity_timestamp set total_time='".$total_time."' where request_no='".$_POST['req']."' and id='".$ids."'");
+					// $sum = strtotime('00:00:00');
+							$sum2=0; 
+							$time3 = $this->db->query("SELECT * FROM tbljoboptractivity_timestamp where request_no='".$_POST['req']."' and total_time!='' and emp_id='".$emp_id2."'");
+							while($all_time = $time3->fetch(PDO::FETCH_ASSOC)){
+								$sum1=strtotime($all_time['total_time'])-$sum;
+								$sum2 = $sum2+$sum1;
+							}
+							$sum3=$sum+$sum2;
+							$temp = $sum1=strtotime($total_time)-$sum;
+							$sum3=$sum3+$temp;
+							$com_time = date("H:i:s",$sum3);
+							$updating = $this->db->query("UPDATE tbljoboptractivity_timestamp set total_time='".$com_time."' where request_no='".$_POST['req']."' and id='".$ids."'");
+						}else if ($jobstat == "working") {
+							$datetime = $get_time2['work_started'];
+							$start_date = new DateTime($stopped);
+							$since_start = $start_date->diff(new DateTime($datetime));
+							$total_time = $since_start->h.":".$since_start->i.":".$since_start->s;
+							$updating2 = $this->db->query("UPDATE tbljoboptractivity_timestamp set total_time='".$total_time."' where request_no='".$_POST['req']."' and id='".$ids."'");
+							$sum = strtotime('00:00:00');
+							$sum2=0; 
+							$time3 = $this->db->query("SELECT * FROM tbljoboptractivity_timestamp where request_no='".$_POST['req']."' and total_time!='' and emp_id='".$emp_id2."'");
+							while($all_time = $time3->fetch(PDO::FETCH_ASSOC)){
+								$sum1=strtotime($all_time['total_time'])-$sum;
+								$sum2 = $sum2+$sum1;
+							}
+							$sum3=$sum+$sum2;
+							$com_time = date("H:i:s",$sum3);
+							$updating = $this->db->query("UPDATE tbljoboptractivity_timestamp set total_time='".$com_time."' where request_no='".$_POST['req']."' and id='".$ids."'");
+						}
+					}
+				}
+				$res4 = $this->db->query("SELECT * FROM tblequipreq where request_no='".$_POST['req']."'");
+				while ($row = $res4->fetch(PDO::FETCH_ASSOC)) 
+				{
+					$req2 = $row['request_no'];
+					$eq_code = $row['eq_code'];
+					$rem = $row['remarks'];
+					if ($rem == "Relieved" || $rem == "stopped") {
+
+					}else{
+						$update2 = $this->db->query("UPDATE tblequipreq set status='stopped',updated_by='".$_POST['user']."',updated_at='".$Ctime."' where request_no='".$req2."' and eq_code='".$eq_code."'");
+						$update3 = $this->db->query("UPDATE tblequipment set status='Active' where id='".$eq_code."'");
+						$ins_equip_act = $this->db->query("INSERT INTO tblequipment_timestamp(request_no,eq_code,status,work_stopped,reason,encoded_by,created_at)values('".$req2."','".$eq_code."','stopped','".$_POST['timestamp']."','".$_POST['reason']."','".$_POST['user']."','".$Ctime."')");
+						$timestamp = $this->db->query("SELECT MAX(id) as id FROM tblequipment_timestamp where request_no='".$_POST['req']."' and eq_code='".$eq_code."'");
+						$get_timestamp = $timestamp->fetch(PDO::FETCH_ASSOC);
+						$togetid = $get_timestamp['id'];
+						$time = $this->db->query("SELECT * FROM tblequipment_timestamp where request_no='".$_POST['req']."' and id='".$togetid."'");
+						$get_time = $time->fetch(PDO::FETCH_ASSOC);
+						$ids = $get_time['id'];
+						$stopped = $get_time['work_stopped'];
+						$get = $this->db->query("SELECT * FROM tblequipment_timestamp where request_no='".$_POST['req']."' and eq_code='".$eq_code."' and id < '".$ids."' ORDER BY id DESC LIMIT 1");
+						$getid = $get->fetch(PDO::FETCH_ASSOC);
+						$id = $getid['id'];
+						$time2 = $this->db->query("SELECT * FROM tblequipment_timestamp where request_no='".$_POST['req']."' and id='$id'");
+						$get_time2 = $time2->fetch(PDO::FETCH_ASSOC);
+						$jobstat = $get_time2['status'];
+						if ($jobstat == "resumed") {
+							$datetime = $get_time2['work_resumed'];
+							$start_date = new DateTime($stopped);
+							$since_start = $start_date->diff(new DateTime($datetime));
+							$total_time = $since_start->h.":".$since_start->i.":".$since_start->s;
+					// $updating2 = $this->db->query("UPDATE tblequipment_timestamp set total_time='".$total_time."' where request_no='".$_POST['req']."' and id='".$ids."'");
+							$sum = strtotime('00:00:00');
+							$sum2=0; 
+							$time3 = $this->db->query("SELECT * FROM tblequipment_timestamp where request_no='".$_POST['req']."' and total_time!='' and eq_code='".$eq_code."'");
+							while($all_time = $time3->fetch(PDO::FETCH_ASSOC)){
+								$sum1=strtotime($all_time['total_time'])-$sum;
+								$sum2 = $sum2+$sum1;
+							}
+							$sum3=$sum+$sum2;
+							$temp = $sum1=strtotime($total_time)-$sum;
+							$sum3=$sum3+$temp;
+							$com_time = date("H:i:s",$sum3);
+							$updating = $this->db->query("UPDATE tblequipment_timestamp set total_time='".$com_time."' where request_no='".$_POST['req']."' and id='".$ids."'");
+						}else if ($jobstat == "working") {
+							$datetime = $get_time2['work_started'];
+							$start_date = new DateTime($stopped);
+							$since_start = $start_date->diff(new DateTime($datetime));
+							$total_time = $since_start->h.":".$since_start->i.":".$since_start->s;
+					// $updating2 = $this->db->query("UPDATE tblequipment_timestamp set total_time='".$total_time."' where request_no='".$_POST['req']."' and id='".$ids."'");
+							$sum = strtotime('00:00:00');
+							$sum2=0; 
+							$time3 = $this->db->query("SELECT * FROM tblequipment_timestamp where request_no='".$_POST['req']."' and total_time!='' and id='".$ids."'");
+							while($all_time = $time3->fetch(PDO::FETCH_ASSOC)){
+								$sum1=strtotime($all_time['total_time'])-$sum;
+								$sum2 = $sum2+$sum1;
+							}
+							$sum3=$sum+$sum2;
+							$temp = $sum1=strtotime($total_time)-$sum;
+							$sum3=$sum3+$temp;
+							$com_time = date("H:i:s",$sum3);
+							$updating = $this->db->query("UPDATE tblequipment_timestamp set total_time='".$com_time."' where request_no='".$_POST['req']."' and id='".$ids."'");
+						}
+					}
+				}
+				$optr = $this->db->query("SELECT * FROM tblgivenequipment_req where request_no='".$_POST['req']."'");
+				while ($row = $optr->fetch(PDO::FETCH_ASSOC)) 
+				{
+					$emp_id = $row['optr_id'];
+					$update2 = $this->db->query("UPDATE tblemployee set job_stat='', request_no='', is_assigned='0',updated_by='".$_POST['user']."',updated_at='".$Ctime."' where emp_id='".$emp_id."'");
+				}
+				$per = $this->db->query("SELECT * FROM tblgivenmanpower_req where request_no='".$_POST['req']."'");
+				while ($row = $per->fetch(PDO::FETCH_ASSOC)) 
+				{
+					$emp_id = $row['emp_id'];
+					$update2 = $this->db->query("UPDATE tblemployee set job_stat='', request_no='', is_assigned='0',updated_by='".$_POST['user']."',updated_at='".$Ctime."' where emp_id='".$emp_id."'");
+				}
+				$equip = $this->db->query("SELECT * FROM tblequipreq where request_no='".$_POST['req']."'");
+				while ($row = $equip->fetch(PDO::FETCH_ASSOC)) 
+				{
+					$eqpt_code = $row['eq_code'];
+					$update2 = $this->db->query("UPDATE tblequipment set status='Active', reason='',updated_by='".$_POST['user']."',updated_at='".$Ctime."' where eqpt_code='".$eqpt_code."'");
+					$update3 = $this->db->query("UPDATE tblequipreq set reason='Cancelled',updated_by='".$_POST['user']."',updated_at='".$Ctime."' where eq_code='".$eqpt_code."'");
+				}
+				$check = $this->db->query("SELECT * FROM tbljoborderrequest where status='cancelled' and request_no='".$_POST['req']."'");
 				if ($check->rowCount() > 0) {
 					return "updated";
 				}else {
@@ -568,119 +864,120 @@ class SupervisorModel
 		// }else{
 		// 	return "no_foreman";
 		// }
-	}
-	public function tojob_timestamp($id)
-	{
-		$res = $this->db->query("SELECT jo.reason,jo.accomplishment,jo.request_no,jo.status,jo.work_started,jo.work_stopped,jo.work_resumed,jo.work_completed FROM tbljoborderrequest j LEFT JOIN tbljob_timestamp jo on j.request_no=jo.request_no where j.request_no='$id' ORDER BY jo.id ASC");
-		while ($row = $res->fetch(PDO::FETCH_ASSOC)) 
-		{
-			$this->timestamps[] = $row;
 		}
-		return $this->timestamps;
 	}
-	public function tooperator_act($id)
-	{
-		$handler = array();
-		$res = $this->db->query("SELECT * FROM tbljoboptractivity_timestamp where emp_id='".$_POST['emp_id']."' and request_no='".$_POST['req']."' ORDER BY id ASC");
-		while ($row = $res->fetch(PDO::FETCH_ASSOC)) 
+		public function tojob_timestamp($id)
 		{
-			$this->operator_act[] = $row;
+			$res = $this->db->query("SELECT jo.reason,jo.accomplishment,jo.request_no,jo.status,jo.work_started,jo.work_stopped,jo.work_resumed,jo.work_completed FROM tbljoborderrequest j LEFT JOIN tbljob_timestamp jo on j.request_no=jo.request_no where j.request_no='$id' ORDER BY jo.id ASC");
+			while ($row = $res->fetch(PDO::FETCH_ASSOC)) 
+			{
+				$this->timestamps[] = $row;
+			}
+			return $this->timestamps;
 		}
-		$res2 = $this->db->query("SELECT e.fname,e.mname,e.lname,e.emp_id FROM tbloperator_activity o,tblemployee e WHERE o.emp_id='".$_POST['emp_id']."' and o.request_no='".$_POST['req']."' and e.emp_id=o.emp_id");
-		$row = $res2->fetch(PDO::FETCH_ASSOC);
+		public function tooperator_act($id)
+		{
+			$handler = array();
+			$res = $this->db->query("SELECT * FROM tbljoboptractivity_timestamp where emp_id='".$_POST['emp_id']."' and request_no='".$_POST['req']."' ORDER BY id ASC");
+			while ($row = $res->fetch(PDO::FETCH_ASSOC)) 
+			{
+				$this->operator_act[] = $row;
+			}
+			$res2 = $this->db->query("SELECT e.fname,e.mname,e.lname,e.emp_id FROM tbloperator_activity o,tblemployee e WHERE o.emp_id='".$_POST['emp_id']."' and o.request_no='".$_POST['req']."' and e.emp_id=o.emp_id");
+			$row = $res2->fetch(PDO::FETCH_ASSOC);
 			$emp_id = $row['emp_id'];
 			$fname = $row['fname'];
 			$mname = $row['mname'];
 			$lname = $row['lname'];
-		$handler = array("optr_act"=>$this->operator_act,"emp_id"=>$emp_id,"fname"=>$fname,"mname"=>$mname,"lname"=>$lname);
-		return $handler;
-	}
-	public function topersonnel_act($id)
-	{
-		$handler = array();
-		$res = $this->db->query("SELECT * FROM tbljobperactivity_timestamp where emp_id='".$_POST['emp_id']."' and request_no='".$_POST['req']."' ORDER BY id ASC");
-		while ($row = $res->fetch(PDO::FETCH_ASSOC)) 
-		{
-			$this->personnel_act[] = $row;
+			$handler = array("optr_act"=>$this->operator_act,"emp_id"=>$emp_id,"fname"=>$fname,"mname"=>$mname,"lname"=>$lname);
+			return $handler;
 		}
-		$res2 = $this->db->query("SELECT e.fname,e.mname,e.lname,e.emp_id FROM tblpersonnel_activity o,tblemployee e WHERE o.emp_id='".$_POST['emp_id']."' and o.request_no='".$_POST['req']."' and e.emp_id=o.emp_id");
-		$row = $res2->fetch(PDO::FETCH_ASSOC);
+		public function topersonnel_act($id)
+		{
+			$handler = array();
+			$res = $this->db->query("SELECT * FROM tbljobperactivity_timestamp where emp_id='".$_POST['emp_id']."' and request_no='".$_POST['req']."' ORDER BY id ASC");
+			while ($row = $res->fetch(PDO::FETCH_ASSOC)) 
+			{
+				$this->personnel_act[] = $row;
+			}
+			$res2 = $this->db->query("SELECT e.fname,e.mname,e.lname,e.emp_id FROM tblpersonnel_activity o,tblemployee e WHERE o.emp_id='".$_POST['emp_id']."' and o.request_no='".$_POST['req']."' and e.emp_id=o.emp_id");
+			$row = $res2->fetch(PDO::FETCH_ASSOC);
 			$emp_id = $row['emp_id'];
 			$fname = $row['fname'];
 			$mname = $row['mname'];
 			$lname = $row['lname'];
-		$handler = array("per_act"=>$this->personnel_act,"emp_id"=>$emp_id,"fname"=>$fname,"mname"=>$mname,"lname"=>$lname);
-		return $handler;
-	}
-	public function toPersonnel_task_added($id)
-	{
-		$res = $this->db->query("SELECT per.status,per.id,per.temp_designation,emp.emp_id,emp.fname,emp.mname,emp.lname,mp.mp_name,per.remarks FROM tblpersonnel_activity per,tblemployee emp,tblmanpower mp where per.emp_id=emp.emp_id and emp.mp_id=mp.id and mp.mp_code='Personnel' and per.request_no='$id'");
-		while ($row = $res->fetch(PDO::FETCH_ASSOC)) 
+			$handler = array("per_act"=>$this->personnel_act,"emp_id"=>$emp_id,"fname"=>$fname,"mname"=>$mname,"lname"=>$lname);
+			return $handler;
+		}
+		public function toPersonnel_task_added($id)
 		{
-			$this->per_added_task[] = $row;
+			$res = $this->db->query("SELECT per.status,per.id,per.temp_designation,emp.emp_id,emp.fname,emp.mname,emp.lname,mp.mp_name,per.remarks FROM tblpersonnel_activity per,tblemployee emp,tblmanpower mp where per.emp_id=emp.emp_id and emp.mp_id=mp.id and mp.mp_code='Personnel' and per.request_no='$id'");
+			while ($row = $res->fetch(PDO::FETCH_ASSOC)) 
+			{
+				$this->per_added_task[] = $row;
+			}
+			return $this->per_added_task;
 		}
-		return $this->per_added_task;
-	}
-	public function toOperator_task_added($id)
-	{
-		$res = $this->db->query("SELECT optr.id,emp.emp_id,emp.fname,emp.mname,emp.lname,mp.mp_name,optr.temp_designation,optr.status,optr.remarks FROM tbloperator_activity optr,tblmanpower mp,tblemployee emp where optr.emp_id=emp.emp_id and emp.mp_id=mp.id and optr.request_no='$id'");
-		while ($row = $res->fetch(PDO::FETCH_ASSOC)) 
+		public function toOperator_task_added($id)
 		{
-			$this->optr_added_task[] = $row;
+			$res = $this->db->query("SELECT optr.id,emp.emp_id,emp.fname,emp.mname,emp.lname,mp.mp_name,optr.temp_designation,optr.status,optr.remarks FROM tbloperator_activity optr,tblmanpower mp,tblemployee emp where optr.emp_id=emp.emp_id and emp.mp_id=mp.id and optr.request_no='$id'");
+			while ($row = $res->fetch(PDO::FETCH_ASSOC)) 
+			{
+				$this->optr_added_task[] = $row;
+			}
+			return $this->optr_added_task;
 		}
-		return $this->optr_added_task;
-	}
-	public function toremove_id($id)
-	{
-		$timezone  = +8;
-		$Ctime = gmdate("Y/m/j H:i:s", time() + 3600*($timezone+date("I")));
-		$res = $this->db->query("UPDATE tbljoborderrequest set is_removed='1', removed_by='".$_POST['user']."', updated_by='".$_POST['user']."',updated_at='".$Ctime."' where request_no='$id'");
-		$check = $this->db->query("SELECT * FROM tbljoborderrequest where is_removed='1' and removed_by='".$_POST['user']."'");
-		if ($check->rowCount() > 0) {
-			return "removed";
-		}else {
-			return "error";
-		}
-	}
-	public function tojob_equipment($id)
-	{
-		$res = $this->db->query("SELECT e.eqpt_name,req.status,req.eq_code FROM tblequipreq req,tblequipment e where req.eq_code=e.id and req.request_no='$id'");
-		while ($row = $res->fetch(PDO::FETCH_ASSOC)) 
+		public function toremove_id($id)
 		{
-			$this->job_equipment[] = $row;
+			$timezone  = +8;
+			$Ctime = gmdate("Y/m/j H:i:s", time() + 3600*($timezone+date("I")));
+			$res = $this->db->query("UPDATE tbljoborderrequest set is_removed='1', removed_by='".$_POST['user']."', updated_by='".$_POST['user']."',updated_at='".$Ctime."' where request_no='$id'");
+			$check = $this->db->query("SELECT * FROM tbljoborderrequest where is_removed='1' and removed_by='".$_POST['user']."'");
+			if ($check->rowCount() > 0) {
+				return "removed";
+			}else {
+				return "error";
+			}
 		}
-		return $this->job_equipment;
-	}
-	public function toequipment_act($id)
-	{
-		$handler = array();
-		$res = $this->db->query("SELECT * FROM tblequipment_timestamp where eq_code='$id' and request_no='".$_POST['req']."' ORDER BY id ASC");
-		while ($row = $res->fetch(PDO::FETCH_ASSOC)) 
+		public function tojob_equipment($id)
 		{
-			$this->equipment_act[] = $row;
+			$res = $this->db->query("SELECT e.eqpt_name,req.status,req.eq_code FROM tblequipreq req,tblequipment e where req.eq_code=e.id and req.request_no='$id'");
+			while ($row = $res->fetch(PDO::FETCH_ASSOC)) 
+			{
+				$this->job_equipment[] = $row;
+			}
+			return $this->job_equipment;
 		}
-		$res2 = $this->db->query("SELECT * FROM tblequipment where id='$id'");
-		$row = $res2->fetch(PDO::FETCH_ASSOC);
-		$eqpt_name = $row['eqpt_name'];
-		$handler = array("eqpt_act"=>$this->equipment_act,"eqpt_name"=>$eqpt_name);
-		return $handler;
-	}
-	public function Logout($user,$role)
-	{
-		$timezone  = +8;
-		$Ctime = gmdate("Y/m/j H:i:s", time() + 3600*($timezone+date("I")));
-		$insert = $this->db->query("INSERT INTO tbluserlogs(type,username,role,date)values('Logout','".$user."','".$role."','".$Ctime."')");
-		session_start();
-		unset($_SESSION['username']);
-		unset($_SESSION['password']);
-		unset($_SESSION['name']);
-		unset($_SESSION['role']);
+		public function toequipment_act($id)
+		{
+			$handler = array();
+			$res = $this->db->query("SELECT * FROM tblequipment_timestamp where eq_code='$id' and request_no='".$_POST['req']."' ORDER BY id ASC");
+			while ($row = $res->fetch(PDO::FETCH_ASSOC)) 
+			{
+				$this->equipment_act[] = $row;
+			}
+			$res2 = $this->db->query("SELECT * FROM tblequipment where id='$id'");
+			$row = $res2->fetch(PDO::FETCH_ASSOC);
+			$eqpt_name = $row['eqpt_name'];
+			$handler = array("eqpt_act"=>$this->equipment_act,"eqpt_name"=>$eqpt_name);
+			return $handler;
+		}
+		public function Logout($user,$role)
+		{
+			$timezone  = +8;
+			$Ctime = gmdate("Y/m/j H:i:s", time() + 3600*($timezone+date("I")));
+			$insert = $this->db->query("INSERT INTO tbluserlogs(type,username,role,date)values('Logout','".$user."','".$role."','".$Ctime."')");
+			session_start();
+			unset($_SESSION['username']);
+			unset($_SESSION['password']);
+			unset($_SESSION['name']);
+			unset($_SESSION['role']);
 			$bol = session_destroy();
-		if ($bol == true) {
-			return true;
-		}else{
-			return false;
+			if ($bol == true) {
+				return true;
+			}else{
+				return false;
+			}
 		}
 	}
-}
-?>
+	?>

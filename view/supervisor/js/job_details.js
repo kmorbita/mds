@@ -115,19 +115,19 @@ $(document).ready(function(){
       arr.forEach(function(item){
         var req = item.request_no.replace("DICT-","");
         if (item.status == "closed") {
-          status = "<button type='button' class='btn btn-danger btn-xs' onclick='status("+req+")'>closed</button>";
+          status = "<button type='button' class='btn btn-danger btn-xs'>closed</button>";
         }else if(item.status == "working"){
-          status = "<button type='button' class='btn btn-primary btn-xs' onclick='status("+req+")'>working</button>";
+          status = "<button type='button' class='btn btn-primary btn-xs'>working</button>";
         }else if(item.status == "queued"){
           status = "<button type='button' class='btn btn-warning btn-xs' onclick='status("+req+")'>queued</button>";
         }else if(item.status == "cancelled"){
-          status = "<button type='button' class='btn btn-danger btn-xs' onclick='status("+req+")'>cancelled</button>";
+          status = "<button type='button' class='btn btn-danger btn-xs'>cancelled</button>";
         }else if(item.status == "activated"){
           status = "<button type='button' class='btn btn-info btn-xs' onclick='status("+req+")'>activated</button>";
+        }else if(item.status == "stopped"){
+          status = "<button type='button' class='btn btn-info btn-xs' onclick='status("+req+")'>stopped</button>";
         }else if(item.status == "completed"){
           status = "<button type='button' class='btn btn-success btn-xs'>completed</button>";
-        }else {
-          status = "<button type='button' class='btn btn-default btn-xs' onclick='status("+req+")'>No status</button>";
         }
         // if (item.foreman_name == "" && item.foreman_id == "0" && item.status == "activated") {
         //   foreman = "<button type='button' class='btn btn-default btn-xs' onclick='foreman("+item.id+")'> Assign</button>";
@@ -152,12 +152,30 @@ $(document).ready(function(){
   }
   setInterval(list,500);
   $("#submit_status").click(function(){
+    var today = new Date();
+    var dd = today.getDate();
+    var mm = today.getMonth() + 1; //January is 0!
+    var yyyy = today.getFullYear();
+    if (dd < 10) {
+      dd = '0' + dd;
+    }
+    if (mm < 10) {
+      mm = '0' + mm;
+    }
+    today = yyyy + '-' + mm + '-' + dd;
+    var hr = new Date();
+    var time = hr.getHours() + ":" + hr.getMinutes() + ":" + hr.getSeconds();
+    var datetime = today+" "+time;
+    var timestamp = prompt("Enter date and time \nDatetime format ( YYYY-MM-DD hr:min:sec ) time is 24 hr. format:", datetime);
+    var reason = prompt("Enter a reason", "");
     var submit_status = "true";
     var id = $("#request_no").val();
     var user = $("#username").val();
     var status = $("#status_code").val();
     var form_data = {
       submit_status : submit_status,
+      timestamp : timestamp,
+      reason : reason,
       user : user,
       status : status,
       req : id,
@@ -308,12 +326,12 @@ function personnel_act(id) {
   });
 }
 function equipment_act(id) {
-    var req = $("#req").val();
-    var form_data = {
-        req : req,
-        equipment_act : id
-    }
-     $.ajax({
+  var req = $("#req").val();
+  var form_data = {
+    req : req,
+    equipment_act : id
+  }
+  $.ajax({
     url : "passer.php",
     type : "POST",
     data : form_data,
@@ -321,23 +339,23 @@ function equipment_act(id) {
     success : function (res) {
         // alert(res);
         var i = 1;
-      var arr = JSON.parse(res);
-      var html = "";
-      $("#equipment").val(arr.eqpt_name);
-      var i=1;
-      arr.eqpt_act.forEach(function(item){
-        html+="<tr class='gradeX'>";
-        html+="<td>"+item.status+"</td>";
-        html+="<td>"+item.work_started+"</td>";
-        html+="<td>"+item.work_stopped+"</td>";
-        html+="<td>"+item.work_resumed+"</td>";
-        html+="<td>"+item.work_completed+"</td>";
-        html+="<td>"+item.reason+"</td>";
-        html+="</tr>";
-        i++;
-      });
-      $("#equipment_modal_data").html(html);
-      $("#equipment_modal").modal("show");
-    }
-  });
+        var arr = JSON.parse(res);
+        var html = "";
+        $("#equipment").val(arr.eqpt_name);
+        var i=1;
+        arr.eqpt_act.forEach(function(item){
+          html+="<tr class='gradeX'>";
+          html+="<td>"+item.status+"</td>";
+          html+="<td>"+item.work_started+"</td>";
+          html+="<td>"+item.work_stopped+"</td>";
+          html+="<td>"+item.work_resumed+"</td>";
+          html+="<td>"+item.work_completed+"</td>";
+          html+="<td>"+item.reason+"</td>";
+          html+="</tr>";
+          i++;
+        });
+        $("#equipment_modal_data").html(html);
+        $("#equipment_modal").modal("show");
+      }
+    });
 }

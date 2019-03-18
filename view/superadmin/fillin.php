@@ -25,7 +25,183 @@ if (isset($_GET['page']) && $_GET['page'] = "fillin" && $_GET['id'] != null) {
 				<div class="panel-actions">
 					<a href="#" class="fa fa-caret-down"></a>
 				</div>
-				<h2 class="panel-title">Equipments</h2>
+				<div class="form-group">
+
+				</div>
+				<h2 class="panel-title">Equipment</h2>
+			</header>
+			<div class="panel-body">
+				<div class="col-md-12">
+					<header class="panel-heading">
+						<div class="panel-actions">
+							<!-- <button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#operator_activity">New</button> -->	
+						</div>
+						<h2 class="panel-title">Equipment Requested</h2>
+					</header>
+					<div class="panel-body">
+						<table class="table table-striped" id="datatable-task-per">
+							<thead>
+								<tr>
+									<th>Equipment Code</th>
+									<th>No. of Equipment</th>
+									<th>W/ Operator</th>
+									<th>Fill</th>
+								</tr>
+							</thead>
+							<tbody>
+								<?php
+								$optr = ""; 
+								foreach($equipment_needed_list as $row): 
+									if ($row['no_optr'] == "1") {
+										$optr = "YES";
+									}else{
+										$optr = "NO";
+									}
+
+									?>
+									<tr>
+										<td><?= $row['eqpt_type'] ?></td>
+										<td><?= $row['no_eqpt'] ?></td>
+										<td><?= $optr ?></td>
+										<td><button type="button" class="btn btn-default btn-sm" onclick="fill_eqpt_needed('<?= $row['type'] ?>','<?= $row['no_eqpt'] ?>','<?= $row['no_optr'] ?>')"><i class="fa fa-pencil"></i></button></td>
+									</tr>
+								<?php endforeach ?>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+			<div class="panel-body">
+				<table class="table table-bordered table-striped mb-none" id="datatable-per-task">
+					<thead>
+						<tr>
+							<th colspan="6" class="center"	style="background-color: #DADADA">Equipment</th>
+						</tr>
+						<tr>
+							<th>No#</th>
+							<th>Equipment</th>
+							<th>Status</th>
+							<th>Remarks</th>
+							<th>Reason</th>
+							<th>Action</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php 
+						$i=1;
+						$status3="";
+						foreach ($Equipment_list as $val): 
+							if ($val['status'] == "") {
+								$status3 = "<button type='button' class='btn btn-xs btn-default'>queued</button>";
+							}elseif ($val['status'] == "stopped") {
+								$status3 = "<button type='button' class='btn btn-xs btn-danger'>stopped</button>";
+							}elseif ($val['status'] == "paused") {
+								$status3 = "<button type='button' class='btn btn-xs btn-danger'>paused</button>";
+							}elseif ($val['status'] == "working") {
+								$status3 = "<button type='button' class='btn btn-xs btn-warning'>working</button>";
+							}elseif ($val['status'] == "started") {
+								$status3 = "<button type='button' class='btn btn-xs btn-success'>started</button>";
+							}elseif ($val['status'] == "resumed") {
+								$status3 = "<button type='button' class='btn btn-xs btn-primary'>resumed</button>";
+							}else{
+								$status3 = "<button type='button' class='btn btn-xs btn-info'>completed</button>";
+							}
+							?>
+							<tr>
+								<td><?= $i ?></td>
+								<td><?= $val['eqpt_name'] ?></td>
+								<td><?= $status3 ?></td>
+								<td><?= $val['remarks'] ?></td>
+								<td><?= $val['reason'] ?></td>
+								<?php 
+								if($job_status != "activated"){
+									if ($val['status'] == "") {
+										?>
+										<?php if ($val['remarks'] == "Relieved") {
+											?>
+											<td><button type="button" class="btn btn-default btn-xs fa fa-trash-o" onclick="return confirm('Are you sure?')?eq_delete('<?= $val['id'] ?>'):'';"></button></td>
+											<?php
+										}else{
+											?>
+											<td><button type="button" class="btn btn-default btn-xs" onclick="eq_work('<?= $val['eq_code'] ?>')"><i class="fa fa-play"></i></button>|<button type="button" class="btn btn-default btn-xs" onclick="eq_relieve('<?= $val['eq_code'] ?>')">Relieve</button></td>
+											<?php
+										}
+										?>
+										<?php
+									}else if ($val['status'] == "working") {
+										?>
+										<?php if ($val['remarks'] == "Relieved") {
+											?>
+											<td><button type="button" class="btn btn-default btn-xs fa fa-trash-o" onclick="return confirm('Are you sure?')?eq_delete('<?= $val['id'] ?>'):'';"></button></td>
+											<?php
+										}else{
+											?>
+											<td><button type="button" class="btn btn-default btn-xs" onclick="eq_stop('<?= $val['eq_code'] ?>')"><i class="fa fa-stop"></i></button>|<button type="button" class="btn btn-default btn-xs" onclick="eq_complete('<?= $val['eq_code'] ?>')">complete</button>|<button type="button" class="btn btn-default btn-xs" onclick="eq_relieve('<?= $val['eq_code'] ?>')">Relieve</button></td>
+											<?php
+										}
+										?>
+										<?php
+									}else if ($val['status'] == "resumed") {
+										?>
+										<?php if ($val['remarks'] == "Relieved") {
+											?>
+											<td><button type="button" class="btn btn-default btn-xs fa fa-trash-o" onclick="return confirm('Are you sure?')?eq_delete('<?= $val['id'] ?>'):'';"></button></td>
+											<?php
+										}else{
+											?>
+											<td><button type="button" class="btn btn-default btn-xs" onclick="eq_stop('<?= $val['eq_code'] ?>')"><i class="fa fa-stop"></i></button>|<button type="button" class="btn btn-default btn-xs" onclick="eq_complete('<?= $val['eq_code'] ?>')">complete</button>|<button type="button" class="btn btn-default btn-xs" onclick="eq_relieve('<?= $val['eq_code'] ?>')">Relieve</button></td>
+											<?php
+										}
+										?>
+										<?php
+									}else if ($val['status'] == "stopped") {
+										?>
+										<?php if ($val['remarks'] == "Relieved") {
+											?>
+											<td><button type="button" class="btn btn-default btn-xs fa fa-trash-o" onclick="return confirm('Are you sure?')?eq_delete('<?= $val['id'] ?>'):'';"></button></td>
+											<?php
+										}else{
+											?>
+											<td><button type="button" class="btn btn-default btn-xs" onclick="eq_resume('<?= $val['eq_code'] ?>')"><i class="fa fa-play"></i></button>|<button type="button" class="btn btn-default btn-xs" onclick="eq_complete('<?= $val['eq_code'] ?>')">complete</button>|<button type="button" class="btn btn-default btn-xs" onclick="eq_relieve('<?= $val['eq_code'] ?>')">Relieve</button></td>
+											<?php
+										}
+										?>
+										<?php
+									}else if ($val['status'] == "paused") {
+										?>
+										<td><button type="button" class="btn btn-default btn-xs" onclick="eq_resume('<?= $val['eq_code'] ?>')"><i class="fa fa-play"></i></button>|<button type="button" class="btn btn-default btn-xs" onclick="eq_complete('<?= $val['eq_code'] ?>')">complete</button>|<button type="button" class="btn btn-default btn-xs" onclick="eq_relieve('<?= $val['eq_code'] ?>')">Relieve</button></td>
+										<?php
+									}else{
+										?>
+										<td><button type="button" class="btn btn-default btn-xs" onclick="eq_relieve('<?= $val['eq_code'] ?>')">Relieve</button></td>
+									<?php }
+								}else{
+									?>
+									<?php if ($val['remarks'] == "Relieved") {
+										?>
+										<td><button type="button" class="btn btn-default btn-xs fa fa-trash-o" onclick="return confirm('Are you sure?')?eq_delete('<?= $val['id'] ?>'):'';"></button></td>
+										<?php
+									}else{
+										?>
+										<td><button type="button" class="btn btn-default btn-xs" onclick="eq_relieve('<?= $val['eq_code'] ?>')">Relieve</button></td>
+										<?php
+									}
+									?>
+								<?php } ?>
+							</tr>
+							<?php
+							$i++;
+						endforeach ?>
+					</tbody>
+				</table>
+			</div>
+		</section>
+		<section class="panel">
+			<header class="panel-heading">
+				<div class="panel-actions">
+					<a href="#" class="fa fa-caret-down"></a>
+				</div>
+				<h2 class="panel-title">Operators</h2>
 			</header>
 			<div class="panel-body">
 				<input type="hidden" id="req_no" value="<?= $id ?>">
@@ -237,182 +413,7 @@ if (isset($_GET['page']) && $_GET['page'] = "fillin" && $_GET['id'] != null) {
 						</table>
 					</div>
 				</section>
-				<section class="panel">
-					<header class="panel-heading">
-						<div class="panel-actions">
-							<a href="#" class="fa fa-caret-down"></a>
-						</div>
-						<div class="form-group">
-
-						</div>
-						<h2 class="panel-title">Equipment</h2>
-					</header>
-					<div class="panel-body">
-						<div class="col-md-12">
-							<header class="panel-heading">
-								<div class="panel-actions">
-									<!-- <button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#operator_activity">New</button> -->	
-								</div>
-								<h2 class="panel-title">Equipment Requested</h2>
-							</header>
-							<div class="panel-body">
-								<table class="table table-striped" id="datatable-task-per">
-									<thead>
-										<tr>
-											<th>Equipment Code</th>
-											<th>No. of Equipment</th>
-											<th>W/ Operator</th>
-											<th>Fill</th>
-										</tr>
-									</thead>
-									<tbody>
-										<?php
-										$optr = ""; 
-										foreach($equipment_needed_list as $row): 
-											if ($row['no_optr'] == "1") {
-												$optr = "YES";
-											}else{
-												$optr = "NO";
-											}
-
-											?>
-											<tr>
-												<td><?= $row['eqpt_type'] ?></td>
-												<td><?= $row['no_eqpt'] ?></td>
-												<td><?= $optr ?></td>
-												<td><button type="button" class="btn btn-default btn-sm" onclick="fill_eqpt_needed('<?= $row['type'] ?>','<?= $row['no_eqpt'] ?>','<?= $row['no_optr'] ?>')"><i class="fa fa-pencil"></i></button></td>
-											</tr>
-										<?php endforeach ?>
-									</tbody>
-								</table>
-							</div>
-						</div>
-					</div>
-					<div class="panel-body">
-						<table class="table table-bordered table-striped mb-none" id="datatable-per-task">
-							<thead>
-								<tr>
-									<th colspan="6" class="center"	style="background-color: #DADADA">Equipment</th>
-								</tr>
-								<tr>
-									<th>No#</th>
-									<th>Equipment</th>
-									<th>Status</th>
-									<th>Remarks</th>
-									<th>Reason</th>
-									<th>Action</th>
-								</tr>
-							</thead>
-							<tbody>
-								<?php 
-								$i=1;
-								$status3="";
-								foreach ($Equipment_list as $val): 
-									if ($val['status'] == "") {
-										$status3 = "<button type='button' class='btn btn-xs btn-default'>queued</button>";
-									}elseif ($val['status'] == "stopped") {
-										$status3 = "<button type='button' class='btn btn-xs btn-danger'>stopped</button>";
-									}elseif ($val['status'] == "paused") {
-										$status3 = "<button type='button' class='btn btn-xs btn-danger'>paused</button>";
-									}elseif ($val['status'] == "working") {
-										$status3 = "<button type='button' class='btn btn-xs btn-warning'>working</button>";
-									}elseif ($val['status'] == "started") {
-										$status3 = "<button type='button' class='btn btn-xs btn-success'>started</button>";
-									}elseif ($val['status'] == "resumed") {
-										$status3 = "<button type='button' class='btn btn-xs btn-primary'>resumed</button>";
-									}else{
-										$status3 = "<button type='button' class='btn btn-xs btn-info'>completed</button>";
-									}
-									?>
-									<tr>
-										<td><?= $i ?></td>
-										<td><?= $val['eqpt_name'] ?></td>
-										<td><?= $status3 ?></td>
-										<td><?= $val['remarks'] ?></td>
-										<td><?= $val['reason'] ?></td>
-										<?php 
-										if($job_status != "activated"){
-											if ($val['status'] == "") {
-												?>
-												<?php if ($val['remarks'] == "Relieved") {
-													?>
-													<td><button type="button" class="btn btn-default btn-xs fa fa-trash-o" onclick="return confirm('Are you sure?')?eq_delete('<?= $val['id'] ?>'):'';"></button></td>
-													<?php
-												}else{
-													?>
-													<td><button type="button" class="btn btn-default btn-xs" onclick="eq_work('<?= $val['eq_code'] ?>')"><i class="fa fa-play"></i></button>|<button type="button" class="btn btn-default btn-xs" onclick="eq_relieve('<?= $val['eq_code'] ?>')">Relieve</button></td>
-													<?php
-												}
-												?>
-												<?php
-											}else if ($val['status'] == "working") {
-												?>
-												<?php if ($val['remarks'] == "Relieved") {
-													?>
-													<td><button type="button" class="btn btn-default btn-xs fa fa-trash-o" onclick="return confirm('Are you sure?')?eq_delete('<?= $val['id'] ?>'):'';"></button></td>
-													<?php
-												}else{
-													?>
-													<td><button type="button" class="btn btn-default btn-xs" onclick="eq_stop('<?= $val['eq_code'] ?>')"><i class="fa fa-stop"></i></button>|<button type="button" class="btn btn-default btn-xs" onclick="eq_complete('<?= $val['eq_code'] ?>')">complete</button>|<button type="button" class="btn btn-default btn-xs" onclick="eq_relieve('<?= $val['eq_code'] ?>')">Relieve</button></td>
-													<?php
-												}
-												?>
-												<?php
-											}else if ($val['status'] == "resumed") {
-												?>
-												<?php if ($val['remarks'] == "Relieved") {
-													?>
-													<td><button type="button" class="btn btn-default btn-xs fa fa-trash-o" onclick="return confirm('Are you sure?')?eq_delete('<?= $val['id'] ?>'):'';"></button></td>
-													<?php
-												}else{
-													?>
-													<td><button type="button" class="btn btn-default btn-xs" onclick="eq_stop('<?= $val['eq_code'] ?>')"><i class="fa fa-stop"></i></button>|<button type="button" class="btn btn-default btn-xs" onclick="eq_complete('<?= $val['eq_code'] ?>')">complete</button>|<button type="button" class="btn btn-default btn-xs" onclick="eq_relieve('<?= $val['eq_code'] ?>')">Relieve</button></td>
-													<?php
-												}
-												?>
-												<?php
-											}else if ($val['status'] == "stopped") {
-												?>
-												<?php if ($val['remarks'] == "Relieved") {
-													?>
-													<td><button type="button" class="btn btn-default btn-xs fa fa-trash-o" onclick="return confirm('Are you sure?')?eq_delete('<?= $val['id'] ?>'):'';"></button></td>
-													<?php
-												}else{
-													?>
-													<td><button type="button" class="btn btn-default btn-xs" onclick="eq_resume('<?= $val['eq_code'] ?>')"><i class="fa fa-play"></i></button>|<button type="button" class="btn btn-default btn-xs" onclick="eq_complete('<?= $val['eq_code'] ?>')">complete</button>|<button type="button" class="btn btn-default btn-xs" onclick="eq_relieve('<?= $val['eq_code'] ?>')">Relieve</button></td>
-													<?php
-												}
-												?>
-												<?php
-											}else if ($val['status'] == "paused") {
-												?>
-												<td><button type="button" class="btn btn-default btn-xs" onclick="eq_resume('<?= $val['eq_code'] ?>')"><i class="fa fa-play"></i></button>|<button type="button" class="btn btn-default btn-xs" onclick="eq_complete('<?= $val['eq_code'] ?>')">complete</button>|<button type="button" class="btn btn-default btn-xs" onclick="eq_relieve('<?= $val['eq_code'] ?>')">Relieve</button></td>
-												<?php
-											}else{
-												?>
-												<td><button type="button" class="btn btn-default btn-xs" onclick="eq_relieve('<?= $val['eq_code'] ?>')">Relieve</button></td>
-											<?php }
-										}else{
-											?>
-											<?php if ($val['remarks'] == "Relieved") {
-												?>
-												<td><button type="button" class="btn btn-default btn-xs fa fa-trash-o" onclick="return confirm('Are you sure?')?eq_delete('<?= $val['id'] ?>'):'';"></button></td>
-												<?php
-											}else{
-												?>
-												<td><button type="button" class="btn btn-default btn-xs" onclick="eq_relieve('<?= $val['eq_code'] ?>')">Relieve</button></td>
-												<?php
-											}
-											?>
-										<?php } ?>
-									</tr>
-									<?php
-									$i++;
-								endforeach ?>
-							</tbody>
-						</table>
-					</div>
-				</section>
+				<!-- here -->
 			</div>
 		</section>
 	</div>

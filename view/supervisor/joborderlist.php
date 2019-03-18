@@ -148,6 +148,7 @@
 														<option></option>
 														<option value="activated">activate</option>
 														<option value="queued">queued</option>
+														<option value="cancelled">cancel</option>
 													</select>
 												</div>
 												<div class="modal-footer">
