@@ -174,7 +174,7 @@
         }else if(item.status == "queued") {
           html+="<td><a href='?page=editform&req_no="+item.request_no+"'><button class='btn btn-default btn-xs fa fa-pencil'></button></a>|<button class='btn btn-default btn-xs fa fa-eye' onclick='job_id("+req+")'></button>|<button class='btn btn-default btn-xs fa fa-ban' onclick='cancel_req("+req+")'></button>|<a href='?page=view_activity&view_activity_id="+item.request_no+"'><button class='btn btn-default btn-xs fa fa-file-text-o'></button></a></td>";
         }else if(item.status == "activated") {
-          html+="<td><a href='?page=editform&req_no="+item.request_no+"'><button class='btn btn-default btn-xs fa fa-pencil'></button></a>|<button class='btn btn-default btn-xs fa fa-eye' onclick='job_id("+req+")'></button>|<button class='btn btn-default btn-xs fa fa-ban' onclick='cancel_req("+req+")'></button>|<a href='?page=view_activity&view_activity_id="+item.request_no+"'><button class='btn btn-default btn-xs fa fa-file-text-o'></button></a></td>";
+          html+="<td><a href='?page=editform&req_no="+item.request_no+"'><button class='btn btn-default btn-xs fa fa-pencil'></button></a>|<button class='btn btn-default btn-xs fa fa-eye' onclick='job_id("+req+")'></button>|<a href='?page=view_activity&view_activity_id="+item.request_no+"'><button class='btn btn-default btn-xs fa fa-file-text-o'></button></a></td>";
         }else {
           html+="<td><button class='btn btn-default btn-xs fa fa-eye' onclick='job_id("+req+")'></button>|<a href='?page=view_activity&view_activity_id="+item.request_no+"'><button class='btn btn-default btn-xs fa fa-file-text-o'></button></a></td>";
         }

@@ -185,7 +185,7 @@ if ($job_status == "completed" || $job_status == "cancelled" || $job_status == "
 							<th>Remarks</th>
 							<th>Status</th>
 							<th>Reason</th>
-							<th>Action</th>
+							<!-- <th>Action</th> -->
 						</thead>
 						<tbody>
 							<?php 
@@ -215,7 +215,7 @@ if ($job_status == "completed" || $job_status == "cancelled" || $job_status == "
 									<td><?= $status2 ?></td>
 									<td><?= $rows['reason'] ?></td>
 									
-									<td><button type="button" class="btn btn-default btn-sm fa fa-trash-o" onclick="return confirm('Are you sure?')?optr_delete('<?= $rows['id'] ?>'):'';"></button></td>
+									
 								</tr>
 								<?php
 								$i++;

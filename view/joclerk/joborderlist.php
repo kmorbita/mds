@@ -104,7 +104,7 @@
 														<label>Status</label>
 														<select data-plugin-selectTwo class="form-control input populate" id="status_code">
 															<option></option>
-															<option value="cancelled">cancel</option>
+															<option value="cancelled">cancelled</option>
 														</select>
 													</div>
 													<div class="modal-footer">
